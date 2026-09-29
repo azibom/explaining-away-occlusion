@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f2efe7" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta name="description" content="A browser-based explaining-away experiment and ten-slide presentation of Kang et al. (2026)." />
+    <title>Explaining Away Occlusion</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css?v=20260930.1" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to the experiment</a>
+
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Explaining Away Occlusion home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <span>Explaining Away<br /><b>Occlusion</b></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <span id="phaseLabel">Interactive study</span>
+        <a id="presentationLink" href="#presentation">Presentation</a>
+        <button id="aboutButton" type="button">About</button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="screen intro is-active" id="introScreen" aria-labelledby="introTitle">
+        <div class="intro-copy">
+          <p class="kicker"><span>Nature Communications · 2026</span> browser reimplementation</p>
+          <h1 id="introTitle">To see what is hidden,<br />first explain what hides it.</h1>
+          <p class="lede">A foreground object blocks most of another object. Does seeing the occluder first help your brain recover the one behind it?</p>
+          <div class="intro-actions">
+            <button class="button button-primary" id="startButton" type="button">Run the experiment <span>→</span></button>
+            <button class="button button-ghost" id="introPresentationButton" type="button">Open the 10 slides</button>
+          </div>
+          <p class="duration">2 practice + 20 measured trials · about 3 minutes · no data leaves this browser</p>
+        </div>
+
+        <div class="hero-demo" aria-label="Animated example of one object occluding another">
+          <canvas id="heroCanvas" width="720" height="520"></canvas>
+          <div class="hero-legend"><span><i class="swatch behind"></i>hidden object</span><span><i class="swatch front"></i>occluder</span></div>
+          <button class="hero-reveal" id="heroReveal" type="button">Hold to remove the occluder</button>
+        </div>
+      </section>
+
+      <section class="screen experiment" id="experimentScreen" aria-labelledby="experimentTitle">
+        <header class="experiment-head">
+          <div>
+            <p class="kicker" id="experimentPhase">Instructions</p>
+            <h2 id="experimentTitle">Identify the object behind.</h2>
+          </div>
+          <div class="trial-counter" aria-live="polite"><b id="trialCurrent">0</b><span>/</span><span id="trialTotal">20</span></div>
+        </header>
+
+        <div class="stage" id="stage">
+          <canvas id="stimulusCanvas" width="960" height="600" aria-label="Experiment stimulus"></canvas>
+          <div class="fixation" id="fixation" aria-hidden="true">+</div>
+
+          <div class="instruction-card" id="instructionCard">
+            <div class="mini-timeline" aria-hidden="true">
+              <div><span>+</span><small>500 ms</small></div><i></i>
+              <div><span class="prime-icon">●</span><small>object · 500 ms</small></div><i></i>
+              <div><span class="scene-icon">◒</span><small>scene · 400 ms</small></div><i></i>
+              <div><span>↔</span><small>choose the rear object</small></div>
+            </div>
+            <h3>The first object is a clue—not the answer.</h3>
+            <p>Sometimes it will be the exact foreground object in the scene; sometimes it will be unrelated. Then choose which of two objects was hiding behind it. The repeated foreground object is intentional: that is the paper’s experimental manipulation.</p>
+            <div class="key-guide"><span><kbd>←</kbd> left choice</span><span><kbd>→</kbd> right choice</span></div>
+            <button class="button button-primary" id="readyButton" type="button">Start two practice trials</button>
+          </div>
+
+          <div class="response-panel" id="responsePanel" hidden>
+            <p>Which object was behind?</p>
+            <div class="choice-grid" id="choiceGrid"></div>
+            <small>Use the arrow keys or click · response window: 3 seconds</small>
+          </div>
+
+          <div class="stage-message" id="stageMessage" hidden><p id="stageMessageText"></p></div>
+        </div>
+
+        <footer class="experiment-foot">
+          <div class="progress"><span id="trialProgress"></span></div>
+          <button id="exitExperiment" type="button">Exit experiment</button>
+        </footer>
+      </section>
+
+      <section class="screen results" id="resultsScreen" aria-labelledby="resultsTitle">
+        <div class="results-intro">
+          <p class="kicker">Your descriptive result</p>
+          <h2 id="resultsTitle">Did the right clue help?</h2>
+          <p class="lede" id="resultNarrative"></p>
+        </div>
+
+        <div class="result-cards">
+          <article><p>Same occluder</p><strong id="sameAccuracy">—</strong><span id="sameRt">— median RT</span></article>
+          <article class="accent"><p>Random object</p><strong id="randomAccuracy">—</strong><span id="randomRt">— median RT</span></article>
+          <article><p>Your accuracy benefit</p><strong id="accuracyBenefit">—</strong><span>percentage points</span></article>
+        </div>
+
+        <div class="result-comparison">
+          <div class="personal-chart" aria-label="Your accuracy by condition">
+            <p>Your run</p>
+            <div class="chart-row"><span>same</span><div><i id="sameBar"></i></div><b id="sameBarLabel">0%</b></div>
+            <div class="chart-row"><span>random</span><div><i id="randomBar"></i></div><b id="randomBarLabel">0%</b></div>
+          </div>
+          <div class="published-reference">
+            <p>Published group result <button class="info-dot" type="button" data-popover="paperResult">i</button></p>
+            <div><strong>76.5%</strong><span>same occluder</span></div>
+            <div><strong>72.5%</strong><span>random object</span></div>
+            <small>+4.0 points · n = 41 retained participants · p &lt; 10<sup>−4</sup></small>
+          </div>
+        </div>
+
+        <div class="result-note">
+          <b>How to read yours</b>
+          <p id="resultExplanation"></p>
+        </div>
+
+        <div class="result-actions">
+          <button class="button button-primary" id="enterDeckButton" type="button">Explain the paper in 10 slides <span>→</span></button>
+          <button class="button button-ghost" id="retryButton" type="button">Run again</button>
+        </div>
+      </section>
+
+      <section class="deck" id="deck" aria-label="Ten-slide paper presentation" hidden>
+        <div class="deck-progress"><span id="deckProgress"></span></div>
+
+        <article class="slide is-current" data-slide="0" data-label="Your experiment">
+          <div class="slide-index">01</div>
+          <div class="slide-copy">
+            <p class="kicker">Begin with an experience</p>
+            <h2>You saw the occluder.<br />Then you saw behind it.</h2>
+            <p class="slide-lede" id="personalSlideText">This presentation can begin without a personal run—but the experiment makes the question tangible.</p>
+            <div class="slide-timeline"><span>fixate</span><i></i><span>prime</span><i></i><span>occluded scene</span><i></i><span>choose behind</span></div>
+            <button class="footnote" type="button" data-popover="demoCaveat">Why your score is not a replication</button>
+          </div>
+          <div class="slide-visual condition-switch" id="conditionSwitch" aria-label="Same-occluder and random-object conditions">
+            <button class="active" type="button" data-condition="same">same occluder</button><button type="button" data-condition="random">random object</button>
+            <canvas id="conditionCanvas" width="700" height="480"></canvas>
+            <p id="conditionCaption">The prime matches the foreground object, so it can be discounted.</p>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="1" data-label="The problem">
+          <div class="slide-index">02</div>
+          <div class="slide-copy narrow">
+            <p class="kicker">The visual problem</p>
+            <h2>The retinal image contains no label saying “in front.”</h2>
+            <p class="slide-lede">At an overlap, the visual system must infer two causes: what continued behind the border, and what interrupted it.</p>
+            <div class="formula"><span>image</span><b>≈</b><span>hidden object</span><b>+</b><span>occluder</span></div>
+          </div>
+          <div class="slide-visual layers-visual">
+            <div class="layer-card back-layer"><span>cause B</span><b>hidden object</b></div>
+            <div class="layer-card front-layer"><span>cause A</span><b>occluder</b></div>
+            <div class="layer-card image-layer"><span>observation</span><b>one image</b></div>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="2" data-label="23 models">
+          <div class="slide-index">03</div>
+          <div class="slide-copy compact">
+            <p class="kicker">Computational experiment</p>
+            <h2>23 architectures. One controlled occlusion task.</h2>
+            <p class="slide-lede">Kang and colleagues combined two FashionMNIST objects, randomly transformed them, and retained scenes with 50–75% occlusion. Networks had to classify both foreground and background.</p>
+            <div class="fact-row"><span><b>50k</b> train</span><span><b>10k</b> validation</span><span><b>10k</b> test</span><span><b>4</b> classes</span></div>
+            <button class="footnote" type="button" data-popover="datasetDetail">Why only four classes?</button>
+          </div>
+          <div class="slide-visual model-grid" id="modelGrid" aria-label="Twenty-three model architectures grouped into feedforward, recurrent, and top-down recurrent families"></div>
+        </article>
+
+        <article class="slide" data-slide="3" data-label="The nuance">
+          <div class="slide-index">04</div>
+          <div class="slide-copy compact">
+            <p class="kicker">The result people may misquote</p>
+            <h2>Recurrence was useful.<br />It was not magic.</h2>
+            <p class="slide-lede">Deep feedforward models could match or outperform recurrent ones. Across architectures, accuracy tracked computational depth better than parameter count.</p>
+            <aside class="claim-box"><b>Careful claim</b><span>Enough sequential computation can be implemented through layers or through recurrent timesteps.</span></aside>
+          </div>
+          <div class="slide-visual depth-chart" aria-label="Conceptual plot of accuracy against computational depth">
+            <div class="axis y"><span>accuracy</span></div><div class="axis x"><span>computational depth →</span></div>
+            <span class="dot ff" style="--x:18%;--y:24%"></span><span class="dot ff" style="--x:33%;--y:47%"></span><span class="dot ff" style="--x:49%;--y:70%"></span><span class="dot ff" style="--x:70%;--y:82%"></span>
+            <span class="dot rec" style="--x:27%;--y:38%"></span><span class="dot rec" style="--x:45%;--y:66%"></span><span class="dot rec" style="--x:62%;--y:79%"></span><span class="dot td" style="--x:55%;--y:73%"></span><span class="dot td" style="--x:80%;--y:84%"></span>
+            <div class="trend"></div><div class="chart-legend"><span><i class="ff"></i>feedforward</span><span><i class="rec"></i>recurrent</span><span><i class="td"></i>top-down</span></div>
+            <small>Conceptual redraw of the paper’s relationship—not digitized data.</small>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="4" data-label="Explaining-away">
+          <div class="slide-index">05</div>
+          <div class="slide-copy narrow">
+            <p class="kicker">The paper’s central mechanism</p>
+            <h2>Recognize the front.<br />Subtract its explanation.</h2>
+            <p class="slide-lede">Once the foreground object explains some pixels and contours, the remaining evidence becomes less ambiguous. The background hypothesis improves.</p>
+            <div class="three-step"><span><b>1</b> infer occluder</span><span><b>2</b> discount it</span><span><b>3</b> update background</span></div>
+          </div>
+          <div class="slide-visual explaining-visual">
+            <canvas id="explainingCanvas" width="720" height="500"></canvas>
+            <div class="recurrent-arrow"><span>evidence returns</span></div>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="5" data-label="Causal tests">
+          <div class="slide-index">06</div>
+          <div class="slide-copy compact">
+            <p class="kicker">Not just a correlation</p>
+            <h2>Change the order—or corrupt the memory.</h2>
+            <p class="slide-lede">Normal-order models predicted foreground first and background second. Reversing that order removed the advantage. Replacing the recurrent hidden state with one from a different occluder selectively hurt background recognition.</p>
+            <button class="footnote" type="button" data-popover="causalScope">What this causal language applies to</button>
+          </div>
+          <div class="slide-visual order-lab">
+            <div class="order-row good"><span>image</span><i>→</i><span>foreground</span><i>→</i><span>background</span><b>benefit</b></div>
+            <div class="order-row"><span>image</span><i>→</i><span>background</span><i>→</i><span>foreground</span><b>weaker</b></div>
+            <div class="state-swap"><span>hidden state</span><button type="button" id="swapState">swap occluder memory</button><span class="state-meter"><i></i></span><small id="stateCaption">Background recognition intact</small></div>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="6" data-label="Humans">
+          <div class="slide-index">07</div>
+          <div class="slide-copy compact">
+            <p class="kicker">Human psychophysics</p>
+            <h2>The correct occluder cue improved accuracy and speed.</h2>
+            <p class="slide-lede">The browser task you tried follows this logic. In the published experiment, the same-occluder condition beat an unrelated-object control.</p>
+            <div class="quality-funnel"><span><b>182</b> initiated</span><i>quality criteria</i><span><b>41</b> retained</span></div>
+            <button class="footnote" type="button" data-popover="qcDetail">See the preregistered-style quality rules</button>
+          </div>
+          <div class="slide-visual human-results">
+            <div class="metric-plot"><p>accuracy</p><div><i style="--v:76.5%"><b>76.5%</b></i><span>same</span></div><div><i class="control" style="--v:72.5%"><b>72.5%</b></i><span>random</span></div><small>p &lt; 10<sup>−4</sup></small></div>
+            <div class="metric-plot rt"><p>reaction time</p><div><i style="--v:93.5%"><b>0.935 s</b></i><span>same</span></div><div><i class="control" style="--v:97.4%"><b>0.974 s</b></i><span>random</span></div><small>p &lt; 10<sup>−11</sup></small></div>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="7" data-label="Reconstitution">
+          <div class="slide-index">08</div>
+          <div class="slide-copy compact">
+            <p class="kicker">Analysis by synthesis</p>
+            <h2>A model can iteratively reconstruct what the occluder removed.</h2>
+            <p class="slide-lede">Recon-Net receives the occluded image plus the foreground object. Across five inference steps, it estimates a 62-dimensional latent code whose generator approaches the unoccluded background.</p>
+            <button class="footnote" type="button" data-popover="reconLimit">What Recon-Net does not prove</button>
+          </div>
+          <div class="slide-visual recon-lab">
+            <div class="recon-frame"><canvas id="reconCanvas" width="560" height="430"></canvas><span id="reconStep">t = 1</span></div>
+            <div class="recon-controls"><button id="reconPlay" type="button">pause</button><div><i id="reconProgress"></i></div><span>latent 62D → generator</span></div>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="8" data-label="Limits">
+          <div class="slide-index">09</div>
+          <div class="slide-copy wide">
+            <p class="kicker">Strong paper, bounded claim</p>
+            <h2>What the evidence supports—and what remains open.</h2>
+            <div class="limits-grid">
+              <button type="button"><span>supports</span><b>Ordered computation can exploit occluder identity.</b><i>Models, perturbations, and human behavior converge on this claim.</i></button>
+              <button type="button"><span>does not show</span><b>Direct neural evidence in humans.</b><i>No EEG, fMRI, or neural recordings were collected in the human experiment.</i></button>
+              <button type="button"><span>caution</span><b>Large online attrition.</b><i>Only 41 of 182 starters passed all quality criteria.</i></button>
+              <button type="button"><span>scope</span><b>Occlusion—not consciousness itself.</b><i>The study explains a visual computation that shapes conscious content; it is not a theory of consciousness.</i></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="slide" data-slide="9" data-label="Takeaway">
+          <div class="slide-index">10</div>
+          <div class="slide-copy finale">
+            <p class="kicker">The thread to computational neuroscience</p>
+            <h2>Perception is inference<br />with causes competing.</h2>
+            <p class="slide-lede">The brain may solve missing visual input not by filling pixels blindly, but by identifying one cause, explaining it away, and revising another. That is a concrete bridge between computation, recurrent circuits, and the contents of experience.</p>
+            <div class="source-links">
+              <a href="https://doi.org/10.1038/s41467-026-68806-5" target="_blank" rel="noreferrer">Paper ↗</a>
+              <a href="https://github.com/KangByungwoo/occlusion_public_repo" target="_blank" rel="noreferrer">Authors’ code ↗</a>
+              <a href="https://doi.org/10.5281/zenodo.17655370" target="_blank" rel="noreferrer">Archived code & data ↗</a>
+            </div>
+            <p class="citation">Kang, B., Midler, B., Chen, F. & Druckmann, S. <em>Nature Communications</em> 17, 2225 (2026).</p>
+          </div>
+          <div class="slide-visual finale-orbit" aria-hidden="true"><span>image</span><span>cause A</span><span>cause B</span><i></i></div>
+        </article>
+
+        <nav class="deck-controls" aria-label="Presentation controls">
+          <button id="previousSlide" type="button" aria-label="Previous slide">←</button>
+          <div><span><b id="currentSlideNumber">1</b> / 10</span><strong id="currentSlideLabel">Your experiment</strong></div>
+          <button id="nextSlide" type="button" aria-label="Next slide">→</button>
+          <button id="fullscreenButton" type="button" aria-label="Toggle fullscreen">⛶</button>
+        </nav>
+      </section>
+    </main>
+
+    <dialog id="aboutDialog">
+      <button class="dialog-close" id="closeAbout" type="button" aria-label="Close">×</button>
+      <p class="kicker">About this project</p>
+      <h2>An independent educational reimplementation.</h2>
+      <p>This browser experience translates the human psychophysics logic from Kang et al. (2026) into a short classroom demonstration. It is not the authors’ official task, a diagnostic test, or a scientific replication.</p>
+      <p>The paper’s full experiment allowed up to 400 trials and used quality controls. This demo uses original procedural stimuli, 20 measured trials, and descriptive personal feedback. Timing varies across browsers and displays.</p>
+      <p>No analytics, accounts, server, cookies, or response uploads are used.</p>
+      <a href="https://doi.org/10.1038/s41467-026-68806-5" target="_blank" rel="noreferrer">Read the open-access paper ↗</a>
+    </dialog>
+
+    <div class="popover" id="popover" role="dialog" aria-modal="false" hidden>
+      <button id="closePopover" type="button" aria-label="Close">×</button>
+      <div id="popoverContent"></div>
+    </div>
+
+    <noscript>This experiment requires JavaScript.</noscript>
+    <script type="module" src="app.js?v=20260930.1"></script>
+  </body>
+</html>
